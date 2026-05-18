@@ -2,8 +2,7 @@
 
 本仓库是一个面向独立开发者、内容创作者和 AI 架构师的 SaaS 支付与前端交互完全体 Demo。我们在此项目里实践了高可用异步网络层熔断、浏览器缓存生命周期自愈、以及大模型流式内容构建等顶级工程规范。
 
-🌟 **体验地址：** Vercel Global Fast Deployment（即将关联您自己的 Vercel 地址）
-
+🌟 **体验地址：** https://demo.xhscopy.top
 ## ✨ 核心技术亮点 (Engineering Highlights)
 
 - **🛡️ bfcache 往返自愈 (bfcache Healing)：** 深度适配现代浏览器 BvCache 缓存生命周期。解决用户外跳到第三方托管页再通过「返回/后退」回到站点时，React 内存状态冻结、主 Action 按钮被死锁的顽疾。
