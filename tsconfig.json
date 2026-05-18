@@ -1,0 +1,48 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    // File Layout
+    // "rootDir": "./src",
+    // "outDir": "./dist",
+
+    "target": "ES2020",
+    /* nodenext 与 moduleResolution: node 不兼容；与 Vite 搭配常用 ESNext */
+    "module": "ESNext",
+    "moduleResolution": "node",
+    /* TS 6+ 中 “node” 解析策略标记为弃用，保留与你要求一致；升级 TS 7 前可改为 bundler */
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true,
+    /* 解决 JSX / React 报错 */
+    "jsx": "react-jsx",
+    /* 解决 import.meta.env（配合 vite-env.d.ts 中的 /// <reference types="vite/client" />） */
+    "types": ["vite/client"],
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "tests", "vitest.config.ts"]
+}
