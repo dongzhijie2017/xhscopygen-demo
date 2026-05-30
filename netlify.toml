@@ -1,0 +1,7 @@
+# Netlify: https://app.netlify.com/ — 与 GitHub 连动自动部署
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
