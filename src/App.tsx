@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { defaultUrlTransform } from 'react-markdown';
 import { toast, Toaster } from 'sonner';
@@ -10,8 +10,9 @@ import {
   LayoutDashboard, 
   Star,
   Type,
-  Clipboard,
-  MessageSquare,
+  Eye,
+  Mail,
+  Github,
   Key,
   Globe,
   HelpCircle,
@@ -31,6 +32,26 @@ const log = {
  * 2. 默认的开源提示词脱敏模板
  */
 const DEFAULT_SYSTEM_PROMPT = `你是一个拥有百万粉丝的小红书爆款文案专家。请根据用户输入的主题和参数，创作极具吸引力、排版优美、包含丰富Emoji的小红书种草文案。文案末尾必须包含相关的热门标签。`;
+
+/** 纯前端访问统计（CountAPI，无需自建后端） */
+const VISIT_COUNTER_NAMESPACE = 'xhscopygen-demo';
+const VISIT_COUNTER_KEY = 'netlify-pv';
+const VISIT_SESSION_KEY = 'xhscopygen_pv_recorded';
+const SITE_LINKS = {
+  github: 'https://github.com/dongzhijie2017/xhscopygen-demo',
+  pro: 'https://xhscopy.top',
+  issues: 'https://github.com/dongzhijie2017/xhscopygen-demo/issues',
+} as const;
+
+/** 邮箱仅存混淆串，避免明文出现在 HTML / mailto 中供爬虫抓取 */
+const EMAIL_OBFUSCATED = 'ZG9uZy56akAxMzkuY29t';
+const revealContactEmail = (): string => {
+  try {
+    return atob(EMAIL_OBFUSCATED);
+  } catch {
+    return '';
+  }
+};
 
 export default function App() {
   // --- 纯前端 BYOK 配置状态机 ---
@@ -57,6 +78,43 @@ export default function App() {
   const [rating, setRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const feedbackTags = ['排版惊艳', '文笔风趣', 'Emoji恰到好处', '字数超预期'];
+
+  const [visitCount, setVisitCount] = useState<number | null>(null);
+  const [emailRevealed, setEmailRevealed] = useState(false);
+
+  // 访问统计：同会话内只 hit 一次，避免刷新重复累加；展示仍拉取全局计数
+  useEffect(() => {
+    const counterGetUrl = `https://api.countapi.xyz/get/${VISIT_COUNTER_NAMESPACE}/${VISIT_COUNTER_KEY}`;
+    const counterHitUrl = `https://api.countapi.xyz/hit/${VISIT_COUNTER_NAMESPACE}/${VISIT_COUNTER_KEY}`;
+
+    const applyCount = (value: unknown) => {
+      const n = typeof value === 'number' ? value : Number(value);
+      setVisitCount(Number.isFinite(n) ? n : null);
+    };
+
+    const fetchGet = () =>
+      fetch(counterGetUrl)
+        .then((r) => r.json())
+        .then((d) => applyCount(d.value))
+        .catch(() => setVisitCount(null));
+
+    if (sessionStorage.getItem(VISIT_SESSION_KEY)) {
+      void fetchGet();
+      return;
+    }
+
+    fetch(counterHitUrl)
+      .then((r) => r.json())
+      .then((d) => {
+        applyCount(d.value);
+        sessionStorage.setItem(VISIT_SESSION_KEY, '1');
+      })
+      .catch(() => {
+        const local = Number(localStorage.getItem('xhscopygen_local_pv') || '0') + 1;
+        localStorage.setItem('xhscopygen_local_pv', String(local));
+        setVisitCount(local);
+      });
+  }, []);
 
   // 🛡️ 往返缓存(bfcache)防冻结自愈：展示客户端自愈方案的健壮性
   useEffect(() => {
@@ -259,6 +317,15 @@ SEO 关键词：${seoKeywords || '无'}
         </div>
 
         <div className="flex items-center gap-3">
+          <div
+            className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-400 tabular-nums"
+            title="全站累计访问（CountAPI 统计，同浏览器会话内刷新不重复计数）"
+          >
+            <Eye className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {visitCount !== null ? visitCount.toLocaleString('zh-CN') : '—'} 次访问
+            </span>
+          </div>
           {/* 配置 API 密钥按钮 */}
           <button 
             onClick={() => setShowConfigModal(true)}
@@ -423,12 +490,9 @@ SEO 关键词：${seoKeywords || '无'}
 
               {result && !loading && (
                 <div className="animate-in fade-in duration-500">
-                  {/* ReactMarkdown + 安全 url 净化 */}
-                  <ReactMarkdown 
-                    urlTransform={safeMdUrl}
-                    className="prose prose-slate max-w-none text-slate-700 leading-relaxed" 
-                    children={result} 
-                  />
+                  <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
+                    <ReactMarkdown urlTransform={safeMdUrl}>{result}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
@@ -499,6 +563,82 @@ SEO 关键词：${seoKeywords || '无'}
           </div>
         </div>
       </main>
+
+      <footer className="mt-auto border-t border-slate-100 bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-bold text-slate-500">联系方式</p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold">
+              <a
+                href={SITE_LINKS.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-slate-600 hover:text-red-600 no-underline transition-colors"
+              >
+                <Github className="w-3.5 h-3.5" />
+                GitHub 开源仓库
+              </a>
+              <a
+                href={SITE_LINKS.pro}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-600 hover:text-red-600 no-underline transition-colors"
+              >
+                商用 Pro 官网
+              </a>
+              {emailRevealed ? (
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <a
+                    href={`mailto:${revealContactEmail()}`}
+                    className="inline-flex items-center gap-1 text-slate-600 hover:text-red-600 no-underline transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    {revealContactEmail().replace('@', ' [at] ')}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(revealContactEmail(), '邮箱已复制到剪贴板')
+                    }
+                    className="text-[10px] font-bold text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg border-none cursor-pointer"
+                  >
+                    复制完整地址
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEmailRevealed(true)}
+                  className="inline-flex items-center gap-1 text-slate-600 hover:text-red-600 bg-transparent border-none cursor-pointer p-0 text-xs font-semibold"
+                  title="需人工点击后才显示，降低自动爬虫抓取概率"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  邮件联系（点击显示）
+                </button>
+              )}
+              <a
+                href={SITE_LINKS.issues}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-600 hover:text-red-600 no-underline transition-colors"
+              >
+                提交 Issue / 反馈（推荐）
+              </a>
+            </div>
+            <p className="text-[10px] text-slate-300 mt-1 max-w-md">
+              防骚扰：页内不写明文邮箱；优先走 GitHub Issue。公开邮箱仍可能被爬取，请在 139 邮箱开启反垃圾策略。
+            </p>
+          </div>
+          <div className="flex flex-col items-start sm:items-end gap-1 text-xs text-slate-400">
+            <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums">
+              <Eye className="w-3.5 h-3.5" />
+              累计访问 {visitCount !== null ? visitCount.toLocaleString('zh-CN') : '加载中…'} 次
+            </span>
+            <span className="text-[10px] text-slate-300">统计由 CountAPI 提供 · 同会话刷新不重复计数</span>
+            <span className="text-[10px] text-slate-300">© {new Date().getFullYear()} XHSCopyGen Demo · BYOK 开源演示</span>
+          </div>
+        </div>
+      </footer>
 
       {/* BYOK 自备 Key 配置 Modal */}
       {showConfigModal && (

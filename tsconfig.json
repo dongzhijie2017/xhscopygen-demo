@@ -7,10 +7,9 @@
     // "outDir": "./dist",
 
     "target": "ES2020",
-    /* nodenext 与 moduleResolution: node 不兼容；与 Vite 搭配常用 ESNext */
+    /* Vite 官方推荐：bundler + ESNext */
     "module": "ESNext",
-    "moduleResolution": "node",
-    /* TS 6+ 中 “node” 解析策略标记为弃用，保留与你要求一致；升级 TS 7 前可改为 bundler */
+    "moduleResolution": "bundler",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
 
     // Other Outputs
@@ -34,8 +33,7 @@
     "strict": true,
     /* 解决 JSX / React 报错 */
     "jsx": "react-jsx",
-    /* 解决 import.meta.env（配合 vite-env.d.ts 中的 /// <reference types="vite/client" />） */
-    "types": ["vite/client"],
+    /* Vite 环境类型见 src/vite-env.d.ts（勿在此处限死 types，否则找不到 vite/client 且会排除 @types/react） */
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
